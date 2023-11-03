@@ -1,0 +1,26 @@
+projection;
+strict ( 2 );
+use draft;
+
+define behavior for zgy_c_student_um alias Student
+{
+  use create;
+  use update;
+  use delete;
+
+  use action Edit;
+  use action Activate;
+  use action Discard;
+  use action Resume;
+  use action Prepare;
+
+  use association _results { create; with draft; }
+}
+
+define behavior for zgy_c_results_um alias Results
+{
+  use update;
+  use delete;
+
+  use association _student { with draft; }
+}
