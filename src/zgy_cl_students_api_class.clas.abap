@@ -7,6 +7,7 @@ CLASS zgy_cl_students_api_class DEFINITION
 
     TYPES:
       tt_create_student TYPE TABLE FOR CREATE zgy_i_student_um\\student,
+
       tt_mapped_early   TYPE RESPONSE FOR MAPPED EARLY zgy_i_student_um,
       tt_failed_early   TYPE RESPONSE FOR FAILED EARLY zgy_i_student_um,
       tt_reported_early TYPE RESPONSE FOR REPORTED EARLY zgy_i_student_um,
@@ -14,8 +15,9 @@ CLASS zgy_cl_students_api_class DEFINITION
 
       tt_student_keys   TYPE TABLE FOR READ IMPORT zgy_i_student_um\\student,
       tt_student_result TYPE TABLE FOR READ RESULT zgy_i_student_um\\student,
+      tt_update_student TYPE TABLE FOR UPDATE zgy_i_student_um\\student,
 
-      tt_update_student TYPE TABLE FOR UPDATE zgy_i_student_um\\student.
+      tt_cba_results    TYPE TABLE FOR CREATE zgy_i_student_um\\student\_results.
 
     "Create constructor
 
@@ -57,7 +59,13 @@ CLASS zgy_cl_students_api_class DEFINITION
         IMPORTING entities TYPE tt_update_student"table for UPDATE zgy_i_student_um\\student
         CHANGING  mapped   TYPE tt_mapped_early"response for mapped early zgy_i_student_um
                   failed   TYPE tt_failed_early "response for failed early zgy_i_student_um
-                  reported TYPE tt_reported_early."response for reported early zgy_i_student_um
+                  reported TYPE tt_reported_early,"response for reported early zgy_i_student_um
+
+      earlynumbering_cba_results
+        IMPORTING entities TYPE tt_cba_results "table for create zgy_i_student_um\\student\_results
+        CHANGING  mapped   TYPE tt_mapped_early "response for mapped early zgy_i_student_um
+                  failed   TYPE tt_failed_early "response for failed early zgy_i_student_um
+                  reported TYPE tt_reported_early. "response for reported early zgy_i_student_um
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -205,6 +213,24 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
         dob            = COND #( WHEN ls_control_flag IS NOT INITIAL THEN ls_student_new-dob ELSE ls_student_old-dob )
      )
      ).
+
+  ENDMETHOD.
+
+  METHOD earlynumbering_cba_results.
+
+    DATA(lv_new_result_id) = get_next_id(  ).
+
+    LOOP AT entities ASSIGNING FIELD-SYMBOL(<lfs_entities>).
+
+      LOOP AT <lfs_entities>-%target ASSIGNING FIELD-SYMBOL(<lfs_result_create>).
+        mapped-results = VALUE #( (
+        %cid = <lfs_result_create>-%cid
+        %is_draft = <lfs_result_create>-%is_draft
+        %key = <lfs_result_create>-%key ) ).
+      ENDLOOP.
+
+    ENDLOOP.
+
 
   ENDMETHOD.
 
