@@ -106,6 +106,14 @@ CLASS lhc_Student IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD cba_Results.
+    zgy_cl_students_api_class=>get_instance( )->cba_results(
+      EXPORTING
+        entities_cba = entities_cba
+      CHANGING
+        mapped       = mapped
+        failed       = failed
+        reported     = reported
+    ).
   ENDMETHOD.
 
   METHOD earlynumbering_cba_Results.

@@ -65,7 +65,14 @@ CLASS zgy_cl_students_api_class DEFINITION
         IMPORTING entities TYPE tt_cba_results "table for create zgy_i_student_um\\student\_results
         CHANGING  mapped   TYPE tt_mapped_early "response for mapped early zgy_i_student_um
                   failed   TYPE tt_failed_early "response for failed early zgy_i_student_um
-                  reported TYPE tt_reported_early. "response for reported early zgy_i_student_um
+                  reported TYPE tt_reported_early, "response for reported early zgy_i_student_um
+
+      cba_results
+        IMPORTING entities_cba TYPE tt_cba_results "table for create zgy_i_student_um\\student\_results
+        CHANGING  mapped       TYPE tt_mapped_early "response for mapped early zgy_i_student_um
+                  failed       TYPE tt_failed_early "response for failed early zgy_i_student_um
+                  reported     TYPE tt_reported_early. "response for reported early zgy_i_student_um
+
 
   PROTECTED SECTION.
   PRIVATE SECTION.
@@ -161,6 +168,11 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
     IF NOT gt_student[] IS INITIAL.
       MODIFY zgy_student_um FROM TABLE @gt_student.
     ENDIF.
+
+    IF gt_results[] IS NOT INITIAL.
+      MODIFY zgy_results_um FROM TABLE @gt_results.
+    ENDIF.
+
   ENDMETHOD.
 
   METHOD read_student.
@@ -231,6 +243,27 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
 
     ENDLOOP.
 
+
+  ENDMETHOD.
+
+  METHOD cba_results.
+
+    gt_results = VALUE #(
+    FOR ls_entities_cba IN entities_cba
+    FOR ls_results_cba IN ls_entities_cba-%target
+    LET ls_rap_results = CORRESPONDING zgy_results_um(
+    ls_results_cba MAPPING FROM ENTITY )
+    IN ( ls_rap_results ) ).
+
+    mapped = VALUE #(
+    results = VALUE #(
+    FOR i = 1 WHILE i <= lines( entities_cba )
+    LET lt_results = VALUE #( entities_cba[ i ]-%target OPTIONAL )
+    IN FOR j = 1 WHILE j <= lines( lt_results )
+    LET ls_curr_results = VALUE #( lt_results[ j ] OPTIONAL )
+    IN ( %cid = ls_curr_results-%cid
+         %key = ls_curr_results-%key
+         Id   = ls_curr_results-Id ) ) ).
 
   ENDMETHOD.
 
