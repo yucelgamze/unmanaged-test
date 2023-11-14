@@ -17,7 +17,8 @@ CLASS zgy_cl_students_api_class DEFINITION
       tt_student_result TYPE TABLE FOR READ RESULT zgy_i_student_um\\student,
       tt_update_student TYPE TABLE FOR UPDATE zgy_i_student_um\\student,
 
-      tt_cba_results    TYPE TABLE FOR CREATE zgy_i_student_um\\student\_results.
+      tt_cba_results    TYPE TABLE FOR CREATE zgy_i_student_um\\student\_results,
+      tt_student_delete TYPE TABLE FOR DELETE zgy_i_student_um\\student.
 
     "Create constructor
 
@@ -71,22 +72,32 @@ CLASS zgy_cl_students_api_class DEFINITION
         IMPORTING entities_cba TYPE tt_cba_results "table for create zgy_i_student_um\\student\_results
         CHANGING  mapped       TYPE tt_mapped_early "response for mapped early zgy_i_student_um
                   failed       TYPE tt_failed_early "response for failed early zgy_i_student_um
-                  reported     TYPE tt_reported_early. "response for reported early zgy_i_student_um
+                  reported     TYPE tt_reported_early, "response for reported early zgy_i_student_um
+
+      delete_student
+        IMPORTING keys     TYPE tt_student_delete "table for delete zgy_i_student_um\\student
+        CHANGING  mapped   TYPE tt_mapped_early "response for mapped early zgy_i_student_um
+                  failed   TYPE tt_failed_early "response for failed early zgy_i_student_um
+                  reported TYPE tt_reported_early. "response for reported early zgy_i_student_um
+
 
 
   PROTECTED SECTION.
   PRIVATE SECTION.
 
-    CLASS-DATA: mo_instance TYPE REF TO zgy_cl_students_api_class,
-                gt_student  TYPE STANDARD TABLE OF zgy_student_um,
-                gt_results  TYPE STANDARD TABLE OF zgy_results_um,
-                gs_mapped   TYPE tt_mapped_early.
+    CLASS-DATA: mo_instance  TYPE REF TO zgy_cl_students_api_class,
+                gt_student   TYPE STANDARD TABLE OF zgy_student_um,
+                gt_results   TYPE STANDARD TABLE OF zgy_results_um,
+                gs_mapped    TYPE tt_mapped_early,
+                gr_student_d TYPE RANGE OF zgy_student_um-id.
 
 ENDCLASS.
 
 
 
 CLASS zgy_cl_students_api_class IMPLEMENTATION.
+
+
   METHOD get_instance.
 
     mo_instance = ro_instance = COND #( WHEN mo_instance IS BOUND
@@ -94,6 +105,7 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
                                        ELSE NEW #(  ) ).
 
   ENDMETHOD.
+
 
   METHOD earlynumbering_create_student.
 
@@ -119,6 +131,7 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
     ).
 
   ENDMETHOD.
+
 
   METHOD create_student.
     "frontend'deki veriyi buffer table'a aktarıyor
@@ -159,10 +172,12 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
+
   METHOD get_next_student_id.
     SELECT MAX( studentid ) FROM zgy_student_um INTO @DATA(lv_max_studentid).
     rv_studentid = lv_max_studentid + 1.
   ENDMETHOD.
+
 
   METHOD savedata.
     IF NOT gt_student[] IS INITIAL.
@@ -173,7 +188,12 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
       MODIFY zgy_results_um FROM TABLE @gt_results.
     ENDIF.
 
+    IF NOT gr_student_d IS INITIAL.
+      DELETE FROM zgy_student_um WHERE id IN @gr_student_d.
+    ENDIF.
+
   ENDMETHOD.
+
 
   METHOD read_student.
 
@@ -184,6 +204,7 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
     result = CORRESPONDING #( lt_student_data MAPPING TO ENTITY ).
 
   ENDMETHOD.
+
 
   METHOD update_student.
 
@@ -228,6 +249,7 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
 
   ENDMETHOD.
 
+
   METHOD earlynumbering_cba_results.
 
     DATA(lv_new_result_id) = get_next_id(  ).
@@ -243,8 +265,8 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
 
     ENDLOOP.
 
-
   ENDMETHOD.
+
 
   METHOD cba_results.
 
@@ -264,6 +286,16 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
     IN ( %cid = ls_curr_results-%cid
          %key = ls_curr_results-%key
          Id   = ls_curr_results-Id ) ) ).
+
+  ENDMETHOD.
+  METHOD delete_student.
+
+    DATA: lt_student TYPE STANDARD TABLE OF zgy_student_um.
+
+    lt_student = CORRESPONDING #( keys MAPPING FROM ENTITY ).
+
+    "range table oluşturulması
+    gr_student_d = VALUE #( FOR ls_student_d IN lt_student sign = 'I' option = 'EQ' ( low = ls_student_d-id ) ).
 
   ENDMETHOD.
 

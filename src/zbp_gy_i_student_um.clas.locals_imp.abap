@@ -84,6 +84,14 @@ CLASS lhc_Student IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD delete.
+    zgy_cl_students_api_class=>get_instance(  )->delete_student(
+      EXPORTING
+        keys     = keys
+      CHANGING
+        mapped   = mapped
+        failed   = failed
+        reported = reported
+    ).
   ENDMETHOD.
 
   METHOD read.

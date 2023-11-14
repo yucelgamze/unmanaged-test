@@ -17,6 +17,8 @@ etag master Lastchangedat
   delete ( features : instance );
   association _results { create; with draft; }
 
+//  side effects { field
+
   draft action Edit;
   draft action Activate;
   draft action Discard;
