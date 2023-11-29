@@ -108,6 +108,40 @@ CLASS lhc_Student IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD lock.
+
+    TRY.
+
+        DATA(lock) = cl_abap_lock_object_factory=>get_instance( iv_name = 'EZLOCKSTUDENT' ).
+      CATCH cx_abap_lock_failure INTO DATA(exception).
+        RAISE SHORTDUMP exception.
+    ENDTRY.
+
+    LOOP AT keys ASSIGNING FIELD-SYMBOL(<lfs_student>).
+      TRY.
+          lock->enqueue(
+            it_parameter  = VALUE #( ( name = 'ID' value = REF #( <lfs_student>-Id ) ) )
+          ).
+        CATCH cx_abap_foreign_lock INTO DATA(foreign_lock).
+
+          APPEND VALUE #(
+          id = keys[ 1 ]-Id
+          %msg = new_message_with_text(
+                   severity = if_abap_behv_message=>severity-error
+                   text     = 'Kayıt başka bir kullanıcı tarfından kitlendi, kullanıcı:' && foreign_lock->user_name
+                 )
+           ) TO reported-student.
+
+          APPEND VALUE #(
+         id = keys[ 1 ]-Id
+         ) TO failed-student.
+
+        CATCH cx_abap_lock_failure INTO exception.
+          RAISE SHORTDUMP exception.
+
+
+      ENDTRY.
+    ENDLOOP.
+
   ENDMETHOD.
 
   METHOD rba_Results.
