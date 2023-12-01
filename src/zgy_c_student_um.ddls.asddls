@@ -27,7 +27,7 @@ define root view entity zgy_c_student_um
       @EndUserText.label: 'Date of Birth'
       Dob,
 //      Lastchangedat,
-//      Locallastchangedat,
+      Locallastchangedat, // Etag alanı eklendi
       
       /* Associations */
       _gender,

@@ -3,6 +3,7 @@ strict ( 2 );
 use draft;
 
 define behavior for zgy_c_student_um alias Student
+use etag
 {
   use create;
   use update;

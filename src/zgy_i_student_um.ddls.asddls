@@ -17,6 +17,7 @@ define root view entity zgy_i_student_um
       gender              as Gender,
       dob                 as Dob,
       lastchangedat       as Lastchangedat,
+      @Semantics.systemDateTime.localInstanceLastChangedAt: true // Etag field olduğunu framework anlasın diye eklenen annotation
       locallastchangedat  as Locallastchangedat,
       _gender.Description as Genderdesc,
       _gender,

@@ -85,11 +85,12 @@ CLASS zgy_cl_students_api_class DEFINITION
   PROTECTED SECTION.
   PRIVATE SECTION.
 
-    CLASS-DATA: mo_instance  TYPE REF TO zgy_cl_students_api_class,
-                gt_student   TYPE STANDARD TABLE OF zgy_student_um,
-                gt_results   TYPE STANDARD TABLE OF zgy_results_um,
-                gs_mapped    TYPE tt_mapped_early,
-                gr_student_d TYPE RANGE OF zgy_student_um-id.
+    CLASS-DATA: mo_instance   TYPE REF TO zgy_cl_students_api_class,
+                gt_student    TYPE STANDARD TABLE OF zgy_student_um,
+                gt_results    TYPE STANDARD TABLE OF zgy_results_um,
+                gs_mapped     TYPE tt_mapped_early,
+                gr_student_d  TYPE RANGE OF zgy_student_um-id,
+                lv_timestampl TYPE timestampl.
 
 ENDCLASS.
 
@@ -135,33 +136,40 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
 
   METHOD create_student.
     "frontend'deki veriyi buffer table'a aktarıyor
+*    gt_student = CORRESPONDING #( entities MAPPING FROM ENTITY ).
+*
+*    IF NOT gt_student[] IS INITIAL.
+*      gt_student[ 1 ]-studentid = get_next_student_id( ).
+*    ENDIF.
+*
+*    mapped = VALUE #(
+*    student = VALUE #(
+*              FOR ls_entity IN entities (
+*        %cid = ls_entity-%cid
+*        %key = ls_entity-%key
+*        %is_draft = ls_entity-%is_draft )
+*              )
+*   ).
     gt_student = CORRESPONDING #( entities MAPPING FROM ENTITY ).
 
-    IF NOT gt_student[] IS INITIAL.
-      gt_student[ 1 ]-studentid = get_next_student_id( ).
-    ENDIF.
+    LOOP AT entities ASSIGNING FIELD-SYMBOL(<lfs_entities>).
 
-    mapped = VALUE #(
-    student = VALUE #(
-              FOR ls_entity IN entities (
-        %cid = ls_entity-%cid
-        %key = ls_entity-%key
-        %is_draft = ls_entity-%is_draft )
-              )
-   ).
-*    LOOP AT entities ASSIGNING FIELD-SYMBOL(<lfs_entities>).
-*      IF NOT gt_student[] IS INITIAL.
-*        gt_student[ 1 ]-studentid = get_next_student_id( ).
-*
-*        mapped-student = VALUE #(
-*   (
-*        %cid = <lfs_entities>-%cid
-*        %key = <lfs_entities>-%key
-*        %is_draft = <lfs_entities>-%is_draft
-*   )
-*).
-*      ENDIF.
-*    ENDLOOP.
+      IF NOT gt_student[] IS INITIAL.
+        gt_student[ 1 ]-studentid = get_next_student_id( ).
+
+        GET TIME STAMP FIELD lv_timestampl.
+        gt_student[ 1 ]-locallastchangedat = lv_timestampl.
+        gt_student[ 1 ]-lastchangedat      = lv_timestampl.
+
+        mapped-student = VALUE #(
+   (
+        %cid = <lfs_entities>-%cid
+        %key = <lfs_entities>-%key
+        %is_draft = <lfs_entities>-%is_draft
+   ) ).
+      ENDIF.
+    ENDLOOP.
+
   ENDMETHOD.
 
 
@@ -215,6 +223,8 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
     lt_student_update   = CORRESPONDING #( entities MAPPING FROM ENTITY ).
     lt_student_update_x = CORRESPONDING #( entities MAPPING FROM ENTITY USING CONTROL ).
 
+    GET TIME STAMP FIELD lv_timestampl.
+
     IF NOT lt_student_update IS INITIAL.
 
       SELECT * FROM zgy_student_um
@@ -244,6 +254,8 @@ CLASS zgy_cl_students_api_class IMPLEMENTATION.
         studentstatus  = COND #( WHEN ls_control_flag IS NOT INITIAL THEN ls_student_new-studentstatus ELSE ls_student_old-studentstatus )
         gender         = COND #( WHEN ls_control_flag IS NOT INITIAL THEN ls_student_new-gender ELSE ls_student_old-gender )
         dob            = COND #( WHEN ls_control_flag IS NOT INITIAL THEN ls_student_new-dob ELSE ls_student_old-dob )
+        locallastchangedat = lv_timestampl
+        lastchangedat = lv_timestampl
      )
      ).
 

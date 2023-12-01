@@ -8,9 +8,9 @@ draft table zgy_student_d_um
 //late numbering
 early numbering
 lock master
-total etag Lastchangedat
+total etag Locallastchangedat //draft özelliği kullanıldığı için data transferinde
 authorization master ( instance )
-etag master Lastchangedat
+etag master Locallastchangedat
 {
   create;
   update ( features : instance );
